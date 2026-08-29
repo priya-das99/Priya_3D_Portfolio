@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, Suspense } from 'react';
-import { ArrowRight, Mail, Compass, Lock } from 'lucide-react';
+import { ArrowRight, Mail } from 'lucide-react';
 import gsap from 'gsap';
 import { CustomEase } from 'gsap/CustomEase';
 import { CustomWiggle } from 'gsap/CustomWiggle';
@@ -270,7 +270,6 @@ export function HeroSection() {
   const subheadingAccentRef = useRef(null);
   const [loadScene, setLoadScene] = useState(false);
   const [modelState, setModelState] = useState('loading'); // 'loading' | 'loaded' | 'error'
-  const [canvasInteractive, setCanvasInteractive] = useState(false);
 
   // Mount 3D Scene after initial text entrance animations have finished playing
   useEffect(() => {
@@ -514,7 +513,7 @@ export function HeroSection() {
 
           {/* RIGHT COLUMN: 3D Scene Illustration, Vertically & Horizontally Centered */}
           <div className="lg:col-span-1 flex items-center justify-center w-full px-2 sm:px-4 lg:px-6">
-            <div className="hero-3d-wrapper relative w-full max-w-[580px] xl:max-w-[620px] h-[480px] sm:h-[540px] lg:h-[580px] xl:h-[620px] max-h-[calc(100vh-9rem)] flex items-center justify-center" style={{ outline: 'none', overflow: 'hidden' }}>
+            <div className="hero-3d-wrapper relative w-full max-w-[580px] xl:max-w-[620px] h-[480px] sm:h-[540px] lg:h-[580px] xl:h-[620px] max-h-[calc(100vh-9rem)] flex items-center justify-center" style={{ outline: 'none', overflow: 'hidden', touchAction: 'pan-y' }}>
               <div className="w-full h-full relative" style={{ outline: 'none' }}>
                 {/* 3D Model Loading Spinner Overlay */}
                 {modelState === 'loading' && (
@@ -540,46 +539,18 @@ export function HeroSection() {
 
                 {/* Smooth reveal container for the Canvas/HeroScene */}
                 <div
-                  className={`w-full h-full transition-opacity duration-700 ease-in-out lg:pointer-events-auto ${canvasInteractive ? 'pointer-events-auto' : 'pointer-events-none'}`}
-                  style={{ opacity: modelState === 'loaded' ? 1 : 0 }}
+                  className="w-full h-full transition-opacity duration-700 ease-in-out"
+                  style={{ opacity: modelState === 'loaded' ? 1 : 0, touchAction: 'pan-y' }}
                 >
                   {loadScene && (
                     <Suspense fallback={null}>
                       <HeroScene
                         onLoad={() => setModelState('loaded')}
                         onError={() => setModelState('error')}
-                        isInteractive={canvasInteractive}
                       />
                     </Suspense>
                   )}
                 </div>
-
-                {/* Mobile Interaction Overlay Toggles (Hidden on Desktop) */}
-                {modelState === 'loaded' && (
-                  <div className="lg:hidden absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
-                    {!canvasInteractive ? (
-                      /* Unlock Button Overlay */
-                      <button
-                        onClick={() => setCanvasInteractive(true)}
-                        className="pointer-events-auto flex items-center space-x-2 px-4.5 py-3 rounded-full bg-surface/90 backdrop-blur-md border border-white/10 text-cyan text-xs font-mono font-bold uppercase tracking-wider shadow-lg hover:bg-surface transition-all duration-300 animate-pulse active:scale-95"
-                      >
-                        <Compass className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '6s' }} />
-                        <span>Tap to Rotate 3D</span>
-                      </button>
-                    ) : (
-                      /* Lock Button Overlay (Top Right corner) */
-                      <div className="absolute top-4 right-4 z-40 pointer-events-none">
-                        <button
-                          onClick={() => setCanvasInteractive(false)}
-                          className="pointer-events-auto flex items-center space-x-1.5 px-3.5 py-2.5 rounded-full bg-[#0D111A]/95 border border-primary-pink/30 hover:border-primary-pink/60 text-primary-pink text-xs font-mono font-bold uppercase tracking-wider shadow-lg transition-all duration-300 active:scale-95"
-                        >
-                          <Lock className="w-3 h-3" />
-                          <span>Lock Camera</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           </div>

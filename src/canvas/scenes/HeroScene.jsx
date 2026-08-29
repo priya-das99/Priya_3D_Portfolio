@@ -1,5 +1,5 @@
 import React, { Suspense, useLayoutEffect, useState, useEffect, useRef, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { PerspectiveCamera, OrbitControls, useGLTF, useProgress } from '@react-three/drei';
 import * as THREE from 'three';
 import {
@@ -32,6 +32,18 @@ function LoadingReporter({ onLoad, onError }) {
     }
   }, [active, progress, errors, onLoad, onError]);
 
+  return null;
+}
+
+// Helper component to override Canvas touchAction settings
+function ScrollHelper() {
+  const { gl } = useThree();
+  useEffect(() => {
+    if (gl && gl.domElement) {
+      // Force touch-action to pan-y to allow native vertical scrolling
+      gl.domElement.style.touchAction = 'pan-y';
+    }
+  }, [gl]);
   return null;
 }
 
@@ -448,7 +460,7 @@ function ModelLoader() {
 // ============================================================================
 // 3. MAIN HERO THREE.JS CANVAS SCENE
 // ============================================================================
-export function HeroScene({ onLoad, onError, isInteractive = false }) {
+export function HeroScene({ onLoad, onError }) {
   const [scale, setScale] = useState(0.28);
   const [isTablet, setIsTablet] = useState(false);
   const [cameraPosition, setCameraPosition] = useState([0, 0, 11.2]);
@@ -503,7 +515,7 @@ export function HeroScene({ onLoad, onError, isInteractive = false }) {
       ref={containerRef}
       data-lenis-prevent
       className="w-full h-full relative cursor-grab active:cursor-grabbing"
-      style={{ outline: 'none', overflow: 'hidden' }}
+      style={{ outline: 'none', overflow: 'hidden', touchAction: 'pan-y' }}
     >
       <Canvas
         shadows
@@ -705,8 +717,8 @@ export function HeroScene({ onLoad, onError, isInteractive = false }) {
             ------------------------------------------------------------------ */}
         <OrbitControls
           enablePan={false}
-          enableZoom={!isTablet || isInteractive}
-          enableRotate={!isTablet || isInteractive}
+          enableZoom={true}
+          enableRotate={true}
           enableDamping={true}
           dampingFactor={0.05}
           zoomSpeed={0.8}
@@ -717,6 +729,7 @@ export function HeroScene({ onLoad, onError, isInteractive = false }) {
           maxPolarAngle={Math.PI / 2.05}
           target={[0, -0.6, 0]}
         />
+        <ScrollHelper />
         <LoadingReporter onLoad={onLoad} onError={onError} />
       </Canvas>
     </div>
