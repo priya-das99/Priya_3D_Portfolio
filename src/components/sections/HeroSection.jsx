@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, Suspense } from 'react';
-import { ArrowRight, Mail } from 'lucide-react';
+import { ArrowRight, Mail, Compass, Lock } from 'lucide-react';
 import gsap from 'gsap';
 import { CustomEase } from 'gsap/CustomEase';
 import { CustomWiggle } from 'gsap/CustomWiggle';
@@ -270,6 +270,7 @@ export function HeroSection() {
   const subheadingAccentRef = useRef(null);
   const [loadScene, setLoadScene] = useState(false);
   const [modelState, setModelState] = useState('loading'); // 'loading' | 'loaded' | 'error'
+  const [canvasInteractive, setCanvasInteractive] = useState(false);
 
   // Mount 3D Scene after initial text entrance animations have finished playing
   useEffect(() => {
@@ -547,10 +548,38 @@ export function HeroSection() {
                       <HeroScene
                         onLoad={() => setModelState('loaded')}
                         onError={() => setModelState('error')}
+                        isInteractive={canvasInteractive}
                       />
                     </Suspense>
                   )}
                 </div>
+
+                {/* Mobile Interaction Overlay Toggles (Hidden on Desktop) */}
+                {modelState === 'loaded' && (
+                  <div className="lg:hidden absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
+                    {!canvasInteractive ? (
+                      /* Unlock Button Overlay */
+                      <button
+                        onClick={() => setCanvasInteractive(true)}
+                        className="pointer-events-auto flex items-center space-x-2 px-4.5 py-3 rounded-full bg-surface/90 backdrop-blur-md border border-white/10 text-cyan text-xs font-mono font-bold uppercase tracking-wider shadow-lg hover:bg-surface transition-all duration-300 animate-pulse active:scale-95"
+                      >
+                        <Compass className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '6s' }} />
+                        <span>Tap to Rotate 3D</span>
+                      </button>
+                    ) : (
+                      /* Lock Button Overlay (Top Right corner) */
+                      <div className="absolute top-4 right-4 z-40 pointer-events-none">
+                        <button
+                          onClick={() => setCanvasInteractive(false)}
+                          className="pointer-events-auto flex items-center space-x-1.5 px-3.5 py-2.5 rounded-full bg-[#0D111A]/95 border border-primary-pink/30 hover:border-primary-pink/60 text-primary-pink text-xs font-mono font-bold uppercase tracking-wider shadow-lg transition-all duration-300 active:scale-95"
+                        >
+                          <Lock className="w-3 h-3" />
+                          <span>Lock Camera</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

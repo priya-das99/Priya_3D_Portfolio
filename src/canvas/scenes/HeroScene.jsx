@@ -448,7 +448,7 @@ function ModelLoader() {
 // ============================================================================
 // 3. MAIN HERO THREE.JS CANVAS SCENE
 // ============================================================================
-export function HeroScene({ onLoad, onError }) {
+export function HeroScene({ onLoad, onError, isInteractive = false }) {
   const [scale, setScale] = useState(0.28);
   const [isTablet, setIsTablet] = useState(false);
   const [cameraPosition, setCameraPosition] = useState([0, 0, 11.2]);
@@ -705,8 +705,8 @@ export function HeroScene({ onLoad, onError }) {
             ------------------------------------------------------------------ */}
         <OrbitControls
           enablePan={false}
-          enableZoom={!isTablet}
-          enableRotate={!isTablet}
+          enableZoom={!isTablet || isInteractive}
+          enableRotate={!isTablet || isInteractive}
           enableDamping={true}
           dampingFactor={0.05}
           zoomSpeed={0.8}
