@@ -20,10 +20,6 @@ dist
 .agents/
 .gemini/
 
-# 3D Models
-*.glb
-*.gltf
-
 # Log files
 npm-debug.log*
 yarn-debug.log*
