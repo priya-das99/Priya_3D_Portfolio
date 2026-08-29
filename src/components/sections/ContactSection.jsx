@@ -286,7 +286,7 @@ export function ContactSection() {
                 <span className="text-gradient-full">Something Amazing!</span>
               </h2>
               <p className="text-content-muted text-base sm:text-lg leading-relaxed font-sans">
-                Passionate about backend development, AI agents, and building for Android. Let's connect and build something amazing!
+                Passionate about backend development, AI agents, and building for Android !
               </p>
             </div>
 
