@@ -35,135 +35,7 @@ function LoadingReporter({ onLoad, onError }) {
   return null;
 }
 
-// =============================================================================
-// ScrollHelper — definitive fix for mobile scroll vs 3D interaction conflict
-//
-// ROOT CAUSES (from three-stdlib/controls/OrbitControls.js — the real code):
-//
-//  1. connect() line 300:
-//       scope.domElement.style.touchAction = "none";
-//     OrbitControls ALWAYS sets touch-action:none on the canvas. This is the
-//     ONLY reason vertical scrolling is blocked. MutationObserver is async and
-//     can still lose the race. We need a SYNCHRONOUS, unbypassable intercept.
-//
-//  2. onPointerDown lines 619-620:
-//       ownerDocument.addEventListener("pointermove", onPointerMove);
-//       ownerDocument.addEventListener("pointerup", onPointerUp);
-//     three-stdlib does NOT use setPointerCapture. Instead it registers
-//     pointermove on the document so it receives all move events.
-//     (Our previous window-capture approach should have worked... but
-//      touch-action:none already blocked native scroll before any gesture.)
-//
-// THE FIX:
-//  A. Object.defineProperty on canvas.style: intercept the touchAction setter.
-//     Any code (OrbitControls) trying to set it to "none" silently gets "pan-y"
-//     instead. This fires synchronously, cannot be bypassed by any library.
-//
-//  B. Document-level capture pointermove: detect vertical vs. horizontal gesture.
-//     For vertical swipes: call stopImmediatePropagation to prevent OrbitControls'
-//     document-level listener from seeing the event. Native scroll proceeds
-//     because touch-action:pan-y allows it.
-// =============================================================================
-function ScrollHelper() {
-  const { gl } = useThree();
 
-  useEffect(() => {
-    const canvas = gl?.domElement;
-    if (!canvas) return;
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // A. INTERCEPT style.touchAction — permanently block OrbitControls from
-    //    setting it to "none". Use Object.defineProperty on the CSSStyleDeclaration
-    //    to intercept the property setter.
-    // ─────────────────────────────────────────────────────────────────────────
-    let _touchActionValue = 'pan-y';
-    const styleProto = Object.getPrototypeOf(canvas.style);
-
-    // Check if already patched (e.g. HMR re-run) — avoid double-patching
-    if (!canvas.__touchActionPatched) {
-      canvas.__touchActionPatched = true;
-      Object.defineProperty(canvas.style, 'touchAction', {
-        get() { return _touchActionValue; },
-        set(val) {
-          // Silently override "none" to "pan-y" — allow everything else
-          _touchActionValue = (val === 'none') ? 'pan-y' : val;
-          // Sync to the real CSS attribute so computed styles work
-          canvas.setAttribute('style',
-            canvas.getAttribute('style')?.replace(/touch-action:[^;]*/g, '') + `;touch-action:${_touchActionValue}`
-          );
-        },
-        configurable: true,
-      });
-      // Trigger the setter once to apply initial value
-      canvas.style.touchAction = 'pan-y';
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // B. GESTURE INTERCEPTOR — capture-phase on document to intercept
-    //    OrbitControls' document-level pointermove listeners.
-    //    For vertical swipes: stopImmediatePropagation prevents OrbitControls
-    //    from rotating; touch-action:pan-y allows the browser to scroll.
-    // ─────────────────────────────────────────────────────────────────────────
-    let startX = 0;
-    let startY = 0;
-    let gestureType = null; // null | 'scroll' | 'rotate'
-    let isOverCanvas = false;
-
-    const onPointerDown = (e) => {
-      if (e.pointerType !== 'touch') return;
-      isOverCanvas = canvas === e.target || canvas.contains(e.target);
-      if (!isOverCanvas) return;
-      startX = e.clientX;
-      startY = e.clientY;
-      gestureType = null;
-    };
-
-    const onPointerMove = (e) => {
-      if (e.pointerType !== 'touch' || !isOverCanvas) return;
-
-      if (!gestureType) {
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 8) return; // wait for enough movement to decide direction
-        gestureType = Math.abs(dy) > Math.abs(dx) ? 'scroll' : 'rotate';
-      }
-
-      if (gestureType === 'scroll') {
-        // Stop OrbitControls' document listener from receiving this event.
-        // Because touch-action:pan-y is enforced, the browser WILL scroll.
-        e.stopImmediatePropagation();
-      }
-    };
-
-    const onPointerUp = () => {
-      isOverCanvas = false;
-      gestureType = null;
-    };
-
-    // Capture phase ensures we run BEFORE OrbitControls' bubble-phase listeners
-    document.addEventListener('pointerdown', onPointerDown, { capture: true, passive: true });
-    document.addEventListener('pointermove', onPointerMove, { capture: true, passive: true });
-    document.addEventListener('pointerup', onPointerUp, { capture: true, passive: true });
-
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown, { capture: true });
-      document.removeEventListener('pointermove', onPointerMove, { capture: true });
-      document.removeEventListener('pointerup', onPointerUp, { capture: true });
-
-      // Restore the style property to normal (remove our override)
-      if (canvas.__touchActionPatched) {
-        delete canvas.__touchActionPatched;
-        try {
-          delete canvas.style.touchAction; // remove own property, restore prototype
-        } catch (_) {}
-        canvas.style.touchAction = 'auto';
-      }
-    };
-  }, [gl]);
-
-  return null;
-}
 
 // ============================================================================
 // 1. FLOATING PARTICLES — R3F mesh (must run inside a <Canvas>)
@@ -631,7 +503,6 @@ export function HeroScene({ onLoad, onError }) {
   return (
     <div
       ref={containerRef}
-      data-lenis-prevent
       className="w-full h-full relative cursor-grab active:cursor-grabbing"
       style={{ outline: 'none', overflow: 'hidden', touchAction: 'pan-y' }}
     >
@@ -847,7 +718,6 @@ export function HeroScene({ onLoad, onError }) {
           maxPolarAngle={Math.PI / 2.05}
           target={[0, -0.6, 0]}
         />
-        <ScrollHelper />
         <LoadingReporter onLoad={onLoad} onError={onError} />
       </Canvas>
     </div>

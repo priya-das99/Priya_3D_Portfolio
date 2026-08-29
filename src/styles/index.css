@@ -5,6 +5,13 @@
 /* Prevent browser focus outline on WebGL canvas elements */
 canvas { outline: none !important; border: none !important; }
 
+/* Force native vertical touch page scrolling over 3D hero canvas elements on mobile */
+.hero-3d-wrapper,
+.hero-3d-wrapper *,
+canvas {
+  touch-action: pan-y !important;
+}
+
 /* ==========================================================================
    CUSTOM FONTS
    ========================================================================== */
