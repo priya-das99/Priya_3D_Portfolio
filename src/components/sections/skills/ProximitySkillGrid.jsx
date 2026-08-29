@@ -534,77 +534,94 @@ export function ProximitySkillGrid({ skills }) {
   );
 }
 
+// ── Mobile skill card with interactive touch & hover animation ─────────────────
+function MobileSkillCard({ skill }) {
+  const [isPressed, setIsPressed] = React.useState(false);
+
+  return (
+    <div
+      role="listitem"
+      data-skill-item
+      onTouchStart={() => setIsPressed(true)}
+      onTouchEnd={() => setTimeout(() => setIsPressed(false), 200)}
+      onMouseDown={() => setIsPressed(true)}
+      onMouseUp={() => setIsPressed(false)}
+      onMouseLeave={() => setIsPressed(false)}
+      className="group relative flex flex-col items-center justify-center gap-2 p-3 sm:p-4 rounded-2xl transition-all duration-300 transform cursor-pointer select-none active:scale-95 hover:-translate-y-1 hover:scale-105"
+      style={{
+        background: isPressed
+          ? `linear-gradient(145deg, ${skill.color}40 0%, rgba(20,20,35,0.95) 100%)`
+          : `linear-gradient(145deg, ${skill.color}18 0%, rgba(12,12,22,0.85) 100%)`,
+        border: `1.5px solid ${isPressed ? skill.color : `${skill.color}40`}`,
+        boxShadow: isPressed
+          ? `0 0 24px ${skill.color}60, inset 0 0 12px ${skill.color}25`
+          : `0 4px 14px ${skill.color}15`,
+        transform: isPressed ? 'scale(1.06) translateY(-2px)' : undefined,
+      }}
+    >
+      {/* Background glow halo on touch / hover */}
+      <div
+        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+        style={{
+          background: `radial-gradient(circle at center, ${skill.color}35 0%, transparent 70%)`,
+        }}
+      />
+
+      {/* Skill Icon */}
+      <div className="relative z-10 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-300 group-hover:scale-110">
+        {skill.icon ? (
+          <img
+            src={skill.icon}
+            alt={skill.name}
+            width={44}
+            height={44}
+            className="w-10 h-10 sm:w-11 sm:h-11 object-contain filter drop-shadow-md transition-all duration-300"
+            loading="lazy"
+            onError={e => {
+              e.currentTarget.style.display = 'none';
+              if (e.currentTarget.nextElementSibling) {
+                e.currentTarget.nextElementSibling.style.display = 'flex';
+              }
+            }}
+          />
+        ) : null}
+        <div
+          className="items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl text-sm font-extrabold font-heading"
+          style={{
+            display: skill.icon ? 'none' : 'flex',
+            background: `${skill.color}25`,
+            color: skill.color,
+            border: `1px solid ${skill.color}40`,
+          }}
+        >
+          {skill.fallbackChar || skill.name[0]}
+        </div>
+      </div>
+
+      {/* Skill Name */}
+      <span
+        className="relative z-10 text-[11px] sm:text-xs font-heading font-semibold text-center leading-tight transition-colors duration-300"
+        style={{
+          color: isPressed ? '#FFFFFF' : '#CBD5E1',
+          textShadow: isPressed ? `0 0 10px ${skill.color}` : 'none',
+        }}
+      >
+        {skill.name}
+      </span>
+    </div>
+  );
+}
+
 // ── Mobile grid fallback ──────────────────────────────────────────────────────
 export function MobileSkillGrid({ skills }) {
   return (
     <div
       role="list"
       aria-label="Skills list"
-      style={{
-        display:             'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-        gap:                 16,
-        padding:             '4px 0',
-      }}
+      className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 sm:gap-4 py-2 px-1"
     >
       {skills.map(skill => (
-        <div
-          key={skill.id || skill.name}
-          role="listitem"
-          style={{
-            display:        'flex',
-            flexDirection:  'column',
-            alignItems:     'center',
-            gap:            8,
-            padding:        '14px 8px 10px',
-            borderRadius:   16,
-            background:     `linear-gradient(145deg, ${skill.color}25 0%, rgba(12,12,22,0.85) 100%)`,
-            border:         `1.5px solid ${skill.color}50`,
-            boxShadow:      `0 4px 12px ${skill.color}15`,
-          }}
-        >
-          {skill.icon ? (
-            <img
-              src={skill.icon}
-              alt={skill.name}
-              width={40}
-              height={40}
-              style={{ objectFit: 'contain' }}
-              loading="lazy"
-              onError={e => {
-                e.currentTarget.style.display = 'none';
-                if (e.currentTarget.nextElementSibling) {
-                  e.currentTarget.nextElementSibling.style.display = 'flex';
-                }
-              }}
-            />
-          ) : null}
-          <div style={{
-            display:        skill.icon ? 'none' : 'flex',
-            alignItems:     'center',
-            justifyContent: 'center',
-            width:          40,
-            height:         40,
-            borderRadius:   10,
-            background:     `${skill.color}25`,
-            color:          skill.color,
-            fontSize:       (skill.fallbackChar?.length || 1) > 2 ? 10 : 15,
-            fontWeight:     800,
-            fontFamily:     'Space Grotesk, sans-serif',
-          }}>
-            {skill.fallbackChar || skill.name[0]}
-          </div>
-          <span style={{
-            fontSize:   10.5,
-            fontFamily: 'Space Grotesk, sans-serif',
-            fontWeight: 600,
-            color:      '#CBD5E1',
-            textAlign:  'center',
-            lineHeight: 1.3,
-          }}>
-            {skill.name}
-          </span>
-        </div>
+        <MobileSkillCard key={skill.id || skill.name} skill={skill} />
       ))}
     </div>
   );

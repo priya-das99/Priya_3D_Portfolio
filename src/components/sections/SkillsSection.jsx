@@ -17,7 +17,7 @@
  *   gsap-utils        : mapRange, clamp (in ProximitySkillGrid)
  */
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -29,13 +29,31 @@ import { SKILL_CATEGORIES, filterSkills } from './skills/skillsData';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-// Detect touch/no-hover devices once (mobile fallback)
-const IS_TOUCH =
-  typeof window !== 'undefined' &&
-  window.matchMedia('(hover: none)').matches;
+// Dynamic reactive hook to reliably detect mobile viewport across all mobile devices (< 768px)
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < breakpoint || window.matchMedia('(hover: none)').matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < breakpoint || window.matchMedia('(hover: none)').matches);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [breakpoint]);
+
+  return isMobile;
+}
 
 // ── SkillsSection ─────────────────────────────────────────────────────────────
 export function SkillsSection() {
+  const isMobile = useIsMobile(768);
   const [activeCategory, setActiveCategory] = useState(SKILL_CATEGORIES[0].id);
   const [displayedSkills, setDisplayedSkills] = useState(
     () => filterSkills(SKILL_CATEGORIES[0].id),
@@ -182,7 +200,7 @@ export function SkillsSection() {
 
         {/* ── Constellation stage ───────────────────────────────────────── */}
         <div ref={gridRef} className="relative">
-          {IS_TOUCH ? (
+          {isMobile ? (
             <MobileSkillGrid skills={displayedSkills} />
           ) : (
             <ProximitySkillGrid
