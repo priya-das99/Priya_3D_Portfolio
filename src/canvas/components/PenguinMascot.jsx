@@ -271,7 +271,6 @@ export function PenguinMascot() {
   // ==========================================================
 
   const handleStopRef = useRef();
-  handleStopRef.current = handleStop;
 
   useEffect(() => {
     const audio = new Audio(AUDIO_PATH);
@@ -468,6 +467,10 @@ export function PenguinMascot() {
 
     changePhase("leaving");
   }, [actions, changePhase]);
+
+  useEffect(() => {
+    handleStopRef.current = handleStop;
+  }, [handleStop]);
 
   // ==========================================================
   // CLEANUP
