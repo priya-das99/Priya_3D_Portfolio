@@ -24,7 +24,7 @@ import { useGSAP } from '@gsap/react';
 
 import { SectionWrapper } from '@components/common/SectionWrapper';
 import { SkillCategories } from './skills/SkillCategories';
-import { ProximitySkillGrid, MobileSkillGrid } from './skills/ProximitySkillGrid';
+import { ProximitySkillGrid } from './skills/ProximitySkillGrid';
 import { SKILL_CATEGORIES, filterSkills } from './skills/skillsData';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
