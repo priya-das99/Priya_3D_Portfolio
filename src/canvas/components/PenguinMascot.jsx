@@ -62,7 +62,7 @@ if (!THREE.MathUtils.moveTowards) {
 
 const MODEL_PATH = "/assets/models/penguin.glb";
 
-const AUDIO_PATH = "/assets/audio/shape_of_you.mp3";
+const AUDIO_PATH = "/assets/audio/swalla.mp3";
 
 const ANIM_NAME = "Scene";
 
