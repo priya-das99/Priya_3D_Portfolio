@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, Suspense } from 'react';
 import { ArrowRight, Mail } from 'lucide-react';
-import { HeroScene } from '@canvas/scenes/HeroScene';
 import gsap from 'gsap';
 import { CustomEase } from 'gsap/CustomEase';
 import { CustomWiggle } from 'gsap/CustomWiggle';
+
+// Lazily load HeroScene to optimize page load speeds
+const HeroScene = React.lazy(() => import('@canvas/scenes/HeroScene'));
 
 // Register plugins once at module load — before any component mounts
 gsap.registerPlugin(CustomEase, CustomWiggle);
@@ -541,10 +543,12 @@ export function HeroSection() {
                   style={{ opacity: modelState === 'loaded' ? 1 : 0 }}
                 >
                   {loadScene && (
-                    <HeroScene
-                      onLoad={() => setModelState('loaded')}
-                      onError={() => setModelState('error')}
-                    />
+                    <Suspense fallback={null}>
+                      <HeroScene
+                        onLoad={() => setModelState('loaded')}
+                        onError={() => setModelState('error')}
+                      />
+                    </Suspense>
                   )}
                 </div>
               </div>

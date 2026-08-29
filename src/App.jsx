@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useLenis } from '@hooks/useLenis';
 import { CustomCursor } from '@components/common/CustomCursor';
 import { AnimatedBackground } from '@components/common/AnimatedBackground';
@@ -14,7 +14,11 @@ import { ContactSection } from '@components/sections/ContactSection';
 // FullScreenParticles: user's exact implementation from HeroScene —
 // wraps FloatingParticles in a transparent fixed Canvas (z-50, pointer-events-none)
 // so the same falling-dot effect appears over EVERY section
-import { FullScreenParticles } from '@canvas/scenes/HeroScene';
+const FullScreenParticles = React.lazy(() =>
+  import('@canvas/scenes/HeroScene').then((module) => ({
+    default: module.FullScreenParticles,
+  }))
+);
 
 import '@styles/index.css';
 
@@ -29,7 +33,9 @@ export function App() {
 
       {/* Global Floating Particles — user's FullScreenParticles from HeroScene
           Fixed, z-50, pointer-events-none → visible on every page section */}
-      <FullScreenParticles count={180} />
+      <Suspense fallback={null}>
+        <FullScreenParticles count={180} />
+      </Suspense>
 
       {/* Custom Glow Cursor */}
       <CustomCursor />
