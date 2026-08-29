@@ -2,17 +2,15 @@
  * ProximitySkillGrid.jsx
  *
  * Orbital Constellation Proximity Scale Grid.
+ * Fully Responsive for Desktop and Mobile Viewports.
  *
- * Positioning Rules:
- *  - ALL category (>= 12 skills): Exact 14-position fixed master constellation layout
- *    (Python focal center, Java & C++ flanks, upper arc, lower arc, outer wings).
- *  - Other categories: 1 focal skill in Center (50%, 50%) and remaining skills
- *    EVENLY DISTRIBUTED in a perfect circular/radial orbit around it.
- *  - Equal angular spacing & equal gaps for any category size.
- *  - Transform-only GSAP proximity scaling (scale + glow halo).
+ * Features:
+ *  - Responsive Badge Sizing (72px desktop / 48px mobile).
+ *  - Desktop Master Constellation (14 spacious slots) & Mobile Master Constellation (2 concentric non-overlapping rings).
+ *  - Both Mouse & Touch gesture proximity scaling + glowing brand halo.
  */
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -20,25 +18,39 @@ import { useGSAP } from '@gsap/react';
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 // ── Config ────────────────────────────────────────────────────────────────────
-const PROXIMITY_RADIUS = 200;  // px – proximity radius
-const MAX_SCALE        = 1.70; // max scale at cursor center
-const CORE_BOOST       = 1.15; // slight resting scale for core skill (Python)
+const PROXIMITY_RADIUS = 180;  // px – proximity radius
+const MAX_SCALE        = 1.55; // max scale at cursor / touch center
+const CORE_BOOST       = 1.12; // resting scale for core skill (Python)
 const TWEEN_DURATION   = 0.35; // seconds
 const TWEEN_EASE       = 'power2.out';
 
+// ── Dynamic Mobile Hook ───────────────────────────────────────────────────────
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < breakpoint;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const check = () => setIsMobile(window.innerWidth < breakpoint);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, [breakpoint]);
+
+  return isMobile;
+}
+
 // ── Constellation Position Generator ──────────────────────────────────────────
-/**
- * Computes radial constellation coordinates [{left, top}] for any skill category.
- */
-function getConstellationPositions(skills) {
+function getConstellationPositions(skills, isMobile = false) {
   const n = skills.length;
   if (n === 0) return [];
   if (n === 1) return [{ left: '50%', top: '50%' }];
 
   // ── 1. ALL Category (12+ skills) ──────────────────────────────────────────
-  // Preserves exact 14-position constellation layout from the reference image
   if (n >= 12) {
-    const MASTER_SLOTS = [
+    const DESKTOP_SLOTS = [
       { left: '50%', top: '50%' }, // Slot 0: Focal Center Focus (Python)
       { left: '33%', top: '50%' }, // Slot 1: Mid-Left Flank (Java)
       { left: '67%', top: '50%' }, // Slot 2: Mid-Right Flank (C++)
@@ -54,6 +66,26 @@ function getConstellationPositions(skills) {
       { left: '86%', top: '48%' }, // Slot 12: Outer Wing Right (LangChain)
       { left: '88%', top: '76%' }, // Slot 13: Low Right Far Wing (Claude Code)
     ];
+
+    // Mobile non-overlapping 2-ring orbital constellation
+    const MOBILE_SLOTS = [
+      { left: '50%', top: '50%' }, // Slot 0: Center Focus (Python)
+      { left: '28%', top: '50%' }, // Slot 1: Mid-Left (Java)
+      { left: '72%', top: '50%' }, // Slot 2: Mid-Right (C++)
+      { left: '26%', top: '26%' }, // Slot 3: Upper Left (TypeScript)
+      { left: '50%', top: '20%' }, // Slot 4: Upper Mid (Spring Boot)
+      { left: '74%', top: '26%' }, // Slot 5: Upper Right (FastAPI)
+      { left: '86%', top: '48%' }, // Slot 6: Far Right (Appwrite)
+      { left: '26%', top: '74%' }, // Slot 7: Lower Left (React)
+      { left: '50%', top: '80%' }, // Slot 8: Lower Mid (PostgreSQL)
+      { left: '74%', top: '74%' }, // Slot 9: Lower Right (Docker)
+      { left: '14%', top: '78%' }, // Slot 10: Low Far Left (Git)
+      { left: '14%', top: '48%' }, // Slot 11: Far Mid Left (OpenAI SDK)
+      { left: '86%', top: '78%' }, // Slot 12: Low Far Right (LangChain)
+      { left: '50%', top: '35%' }, // Slot 13: Inner High (GitHub Actions)
+    ];
+
+    const MASTER_SLOTS = isMobile ? MOBILE_SLOTS : DESKTOP_SLOTS;
 
     const ID_SLOT_MAP = {
       'python':          0,
@@ -98,19 +130,16 @@ function getConstellationPositions(skills) {
   }
 
   // ── 2. Dynamic Circular / Radial Distribution (Other Categories) ──────────
-  // Places 1 focal skill in the Center and distributes remaining (n - 1) skills
-  // in a perfect, equal-angled circular orbit around it.
   const coreIdx = skills.findIndex(s => s.isCore);
   const centerIndex = coreIdx >= 0 ? coreIdx : 0;
   const positions = new Array(n);
 
-  // Center focal skill
   positions[centerIndex] = { left: '50%', top: '50%' };
 
   const orbitSkillsCount = n - 1;
-  const rx = 33; // horizontal radius %
-  const ry = 28; // vertical radius %
-  const startAngle = -Math.PI / 2; // start top (12 o'clock)
+  const rx = isMobile ? 36 : 33; // horizontal radius %
+  const ry = isMobile ? 30 : 28; // vertical radius %
+  const startAngle = -Math.PI / 2;
 
   let orbitIdx = 0;
   for (let i = 0; i < n; i++) {
@@ -143,8 +172,11 @@ function buildStars() {
 const STARS = buildStars();
 
 // ── SkillItem ─────────────────────────────────────────────────────────────────
-const SkillItem = React.memo(function SkillItem({ skill, style }) {
+const SkillItem = React.memo(function SkillItem({ skill, style, isMobile }) {
   const color = skill.color || '#06B6D4';
+  const badgeSize = isMobile ? 48 : 72;
+  const glowSize  = isMobile ? 100 : 150;
+  const iconSize  = isMobile ? 26 : 42;
 
   return (
     <div
@@ -165,11 +197,11 @@ const SkillItem = React.memo(function SkillItem({ skill, style }) {
     >
       {/* Badge container */}
       <div style={{
-        position:  'relative',
+        position:   'relative',
         flexShrink: 0,
-        isolation: 'isolate',
-        width:     72,
-        height:    72,
+        isolation:  'isolate',
+        width:      badgeSize,
+        height:     badgeSize,
       }}>
         {/* Proximity glow halo */}
         <div
@@ -180,8 +212,8 @@ const SkillItem = React.memo(function SkillItem({ skill, style }) {
             top:          '50%',
             left:         '50%',
             transform:    'translate(-50%, -50%)',
-            width:        150,
-            height:       150,
+            width:        glowSize,
+            height:       glowSize,
             borderRadius: '50%',
             background:   `radial-gradient(circle, ${color}CC 0%, ${color}66 25%, ${color}22 55%, transparent 75%)`,
             opacity:      0,
@@ -200,8 +232,8 @@ const SkillItem = React.memo(function SkillItem({ skill, style }) {
               top:          '50%',
               left:         '50%',
               transform:    'translate(-50%, -50%)',
-              width:        98,
-              height:       98,
+              width:        isMobile ? 64 : 98,
+              height:       isMobile ? 64 : 98,
               borderRadius: '50%',
               border:       `1.5px solid ${color}60`,
               pointerEvents: 'none',
@@ -215,24 +247,24 @@ const SkillItem = React.memo(function SkillItem({ skill, style }) {
         <div style={{
           position:       'relative',
           zIndex:         1,
-          width:          72,
-          height:         72,
-          borderRadius:   '22px',
+          width:          badgeSize,
+          height:         badgeSize,
+          borderRadius:   isMobile ? '15px' : '22px',
           background:     `linear-gradient(145deg, ${color}35 0%, rgba(12,12,22,0.90) 100%)`,
           border:         `2px solid ${color}70`,
           display:        'flex',
           alignItems:     'center',
           justifyContent: 'center',
           boxShadow:      skill.isCore
-            ? `0 0 24px 4px ${color}40, inset 0 1px 0 rgba(255,255,255,0.14)`
-            : `0 4px 16px ${color}22, inset 0 1px 0 rgba(255,255,255,0.08)`,
+            ? `0 0 20px 3px ${color}40, inset 0 1px 0 rgba(255,255,255,0.14)`
+            : `0 3px 12px ${color}22, inset 0 1px 0 rgba(255,255,255,0.08)`,
           overflow:       'hidden',
         }}>
           {/* Specular highlight */}
           <div aria-hidden="true" style={{
             position:     'absolute',
             inset:        0,
-            borderRadius: '22px',
+            borderRadius: isMobile ? '15px' : '22px',
             background:   'radial-gradient(ellipse at 35% 25%, rgba(255,255,255,0.1) 0%, transparent 55%)',
             pointerEvents: 'none',
           }} />
@@ -241,8 +273,8 @@ const SkillItem = React.memo(function SkillItem({ skill, style }) {
             <img
               src={skill.icon}
               alt=""
-              width={42}
-              height={42}
+              width={iconSize}
+              height={iconSize}
               style={{ objectFit: 'contain', position: 'relative', zIndex: 1, display: 'block' }}
               loading="lazy"
               onError={e => {
@@ -261,15 +293,14 @@ const SkillItem = React.memo(function SkillItem({ skill, style }) {
               display:        skill.icon ? 'none' : 'flex',
               alignItems:     'center',
               justifyContent: 'center',
-              width:          42,
-              height:         42,
+              width:          iconSize,
+              height:         iconSize,
               position:       'relative',
               zIndex:         1,
-              borderRadius:   10,
+              borderRadius:   8,
               background:     `${color}28`,
               color:          color,
-              fontSize:       (skill.fallbackChar?.length || 1) > 2 ? 9
-                            : (skill.fallbackChar?.length || 1) > 1 ? 12 : 18,
+              fontSize:       isMobile ? 10 : ((skill.fallbackChar?.length || 1) > 2 ? 9 : 18),
               fontWeight:     800,
               fontFamily:     'Space Grotesk, sans-serif',
               letterSpacing:  '-0.03em',
@@ -285,8 +316,8 @@ const SkillItem = React.memo(function SkillItem({ skill, style }) {
         data-label
         style={{
           display:       'block',
-          marginTop:     8,
-          fontSize:      11.5,
+          marginTop:     isMobile ? 4 : 8,
+          fontSize:      isMobile ? 9.5 : 11.5,
           fontFamily:    'Space Grotesk, sans-serif',
           fontWeight:    600,
           color:         '#CBD5E1',
@@ -306,13 +337,14 @@ const SkillItem = React.memo(function SkillItem({ skill, style }) {
 
 // ── ProximitySkillGrid ────────────────────────────────────────────────────────
 export function ProximitySkillGrid({ skills }) {
+  const isMobile = useIsMobile(768);
   const stageRef = useRef(null);
 
-  // Compute spacious constellation positions
-  const positions = useMemo(() => getConstellationPositions(skills), [skills]);
+  // Compute responsive constellation positions
+  const positions = useMemo(() => getConstellationPositions(skills, isMobile), [skills, isMobile]);
 
-  // Stage height is compact and well-proportioned
-  const stageHeight = 480;
+  // Dynamic stage height for responsive viewport
+  const stageHeight = isMobile ? 380 : 480;
 
   // ── GSAP: Entrance & Proximity Interaction with Position Caching ───────────
   useGSAP((context, contextSafe) => {
@@ -323,10 +355,8 @@ export function ProximitySkillGrid({ skills }) {
     if (cards.length === 0) return;
     const glows = cards.map(c => c.querySelector('[data-glow]'));
 
-    // Check prefers-reduced-motion
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Cache card center positions (in viewport coordinates)
     let cachedCenters = [];
 
     const updateCache = () => {
@@ -358,28 +388,26 @@ export function ProximitySkillGrid({ skills }) {
       updateCache();
     }
 
-    // Recalculate cache on resize or scroll (so mousemove has ZERO DOM reads)
     window.addEventListener('resize', updateCache);
     window.addEventListener('scroll', updateCache, { passive: true });
 
-    // Proximity mouse handler (animates ONLY transform: scale and glow opacity)
-    const onMouseMove = contextSafe((e) => {
+    // Proximity calculation for mouse & touch coordinates
+    const updateProximityAt = contextSafe((clientX, clientY) => {
       if (prefersReduced) return;
-      const mx = e.clientX;
-      const my = e.clientY;
 
       cards.forEach((card, i) => {
         const center = cachedCenters[i];
         if (!center) return;
 
-        const dx = mx - center.cx;
-        const dy = my - center.cy;
+        const dx = clientX - center.cx;
+        const dy = clientY - center.cy;
         const d  = Math.hypot(dx, dy);
 
-        // Proximity calculation: map distance 0→RADIUS to 1→0
+        const radius = isMobile ? 140 : PROXIMITY_RADIUS;
+
         const p = gsap.utils.clamp(
           0, 1,
-          gsap.utils.mapRange(0, PROXIMITY_RADIUS, 1, 0, d),
+          gsap.utils.mapRange(0, radius, 1, 0, d),
         );
 
         const isCore      = card.dataset.core === 'true';
@@ -405,7 +433,17 @@ export function ProximitySkillGrid({ skills }) {
       });
     });
 
-    const onMouseLeave = contextSafe(() => {
+    const onMouseMove = (e) => {
+      updateProximityAt(e.clientX, e.clientY);
+    };
+
+    const onTouchMove = (e) => {
+      if (e.touches && e.touches.length > 0) {
+        updateProximityAt(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
+    const onPointerLeave = contextSafe(() => {
       if (prefersReduced) return;
       cards.forEach((card, i) => {
         const isCore = card.dataset.core === 'true';
@@ -428,17 +466,22 @@ export function ProximitySkillGrid({ skills }) {
     });
 
     stage.addEventListener('mousemove',  onMouseMove);
-    stage.addEventListener('mouseleave', onMouseLeave);
+    stage.addEventListener('mouseleave', onPointerLeave);
+    stage.addEventListener('touchstart', onTouchMove, { passive: true });
+    stage.addEventListener('touchmove',  onTouchMove, { passive: true });
+    stage.addEventListener('touchend',   onPointerLeave);
 
     return () => {
       window.removeEventListener('resize', updateCache);
       window.removeEventListener('scroll', updateCache);
       stage.removeEventListener('mousemove',  onMouseMove);
-      stage.removeEventListener('mouseleave', onMouseLeave);
+      stage.removeEventListener('mouseleave', onPointerLeave);
+      stage.removeEventListener('touchstart', onTouchMove);
+      stage.removeEventListener('touchmove',  onTouchMove);
+      stage.removeEventListener('touchend',   onPointerLeave);
     };
-  }, { scope: stageRef, dependencies: [skills] });
+  }, { scope: stageRef, dependencies: [skills, isMobile] });
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <>
       <style>{`
@@ -448,7 +491,7 @@ export function ProximitySkillGrid({ skills }) {
         }
       `}</style>
 
-      {/* Centered Constellation Stage (max-width: 1050px, centered with margin: 0 auto) */}
+      {/* Centered Constellation Stage */}
       <div
         ref={stageRef}
         role="list"
@@ -461,6 +504,7 @@ export function ProximitySkillGrid({ skills }) {
           margin:     '0 auto',
           cursor:     'crosshair',
           userSelect: 'none',
+          touchAction: 'pan-y',
         }}
       >
         {/* Ambient stars */}
@@ -482,7 +526,7 @@ export function ProximitySkillGrid({ skills }) {
           />
         ))}
 
-        {/* Orbital ellipse guides matching reference background */}
+        {/* Orbital ellipse guides */}
         <svg
           aria-hidden="true"
           style={{
@@ -496,9 +540,9 @@ export function ProximitySkillGrid({ skills }) {
           }}
         >
           {/* Inner orbit ring */}
-          <ellipse cx="50%" cy="50%" rx="24%" ry="28%" stroke="#8B5CF6" strokeWidth="1" strokeDasharray="3 3" fill="none" />
+          <ellipse cx="50%" cy="50%" rx={isMobile ? "30%" : "24%"} ry={isMobile ? "32%" : "28%"} stroke="#8B5CF6" strokeWidth="1" strokeDasharray="3 3" fill="none" />
           {/* Outer orbit ring */}
-          <ellipse cx="50%" cy="50%" rx="44%" ry="34%" stroke="#06B6D4" strokeWidth="0.8" strokeDasharray="4 4" fill="none" />
+          <ellipse cx="50%" cy="50%" rx={isMobile ? "46%" : "44%"} ry={isMobile ? "42%" : "34%"} stroke="#06B6D4" strokeWidth="0.8" strokeDasharray="4 4" fill="none" />
         </svg>
 
         {/* Skill items */}
@@ -506,6 +550,7 @@ export function ProximitySkillGrid({ skills }) {
           <SkillItem
             key={skill.id || skill.name}
             skill={skill}
+            isMobile={isMobile}
             style={positions[i] || { left: '50%', top: '50%' }}
           />
         ))}
@@ -527,102 +572,10 @@ export function ProximitySkillGrid({ skills }) {
             pointerEvents: 'none',
           }}
         >
-          ✦ move your cursor around
+          ✦ {isMobile ? 'touch to explore skills' : 'move your cursor around'}
         </p>
       </div>
     </>
   );
 }
 
-// ── Mobile skill card with interactive touch & hover animation ─────────────────
-function MobileSkillCard({ skill }) {
-  const [isPressed, setIsPressed] = React.useState(false);
-
-  return (
-    <div
-      role="listitem"
-      data-skill-item
-      onTouchStart={() => setIsPressed(true)}
-      onTouchEnd={() => setTimeout(() => setIsPressed(false), 200)}
-      onMouseDown={() => setIsPressed(true)}
-      onMouseUp={() => setIsPressed(false)}
-      onMouseLeave={() => setIsPressed(false)}
-      className="group relative flex flex-col items-center justify-center gap-2 p-3 sm:p-4 rounded-2xl transition-all duration-300 transform cursor-pointer select-none active:scale-95 hover:-translate-y-1 hover:scale-105"
-      style={{
-        background: isPressed
-          ? `linear-gradient(145deg, ${skill.color}40 0%, rgba(20,20,35,0.95) 100%)`
-          : `linear-gradient(145deg, ${skill.color}18 0%, rgba(12,12,22,0.85) 100%)`,
-        border: `1.5px solid ${isPressed ? skill.color : `${skill.color}40`}`,
-        boxShadow: isPressed
-          ? `0 0 24px ${skill.color}60, inset 0 0 12px ${skill.color}25`
-          : `0 4px 14px ${skill.color}15`,
-        transform: isPressed ? 'scale(1.06) translateY(-2px)' : undefined,
-      }}
-    >
-      {/* Background glow halo on touch / hover */}
-      <div
-        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-        style={{
-          background: `radial-gradient(circle at center, ${skill.color}35 0%, transparent 70%)`,
-        }}
-      />
-
-      {/* Skill Icon */}
-      <div className="relative z-10 flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 transition-transform duration-300 group-hover:scale-110">
-        {skill.icon ? (
-          <img
-            src={skill.icon}
-            alt={skill.name}
-            width={44}
-            height={44}
-            className="w-10 h-10 sm:w-11 sm:h-11 object-contain filter drop-shadow-md transition-all duration-300"
-            loading="lazy"
-            onError={e => {
-              e.currentTarget.style.display = 'none';
-              if (e.currentTarget.nextElementSibling) {
-                e.currentTarget.nextElementSibling.style.display = 'flex';
-              }
-            }}
-          />
-        ) : null}
-        <div
-          className="items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-xl text-sm font-extrabold font-heading"
-          style={{
-            display: skill.icon ? 'none' : 'flex',
-            background: `${skill.color}25`,
-            color: skill.color,
-            border: `1px solid ${skill.color}40`,
-          }}
-        >
-          {skill.fallbackChar || skill.name[0]}
-        </div>
-      </div>
-
-      {/* Skill Name */}
-      <span
-        className="relative z-10 text-[11px] sm:text-xs font-heading font-semibold text-center leading-tight transition-colors duration-300"
-        style={{
-          color: isPressed ? '#FFFFFF' : '#CBD5E1',
-          textShadow: isPressed ? `0 0 10px ${skill.color}` : 'none',
-        }}
-      >
-        {skill.name}
-      </span>
-    </div>
-  );
-}
-
-// ── Mobile grid fallback ──────────────────────────────────────────────────────
-export function MobileSkillGrid({ skills }) {
-  return (
-    <div
-      role="list"
-      aria-label="Skills list"
-      className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 sm:gap-4 py-2 px-1"
-    >
-      {skills.map(skill => (
-        <MobileSkillCard key={skill.id || skill.name} skill={skill} />
-      ))}
-    </div>
-  );
-}

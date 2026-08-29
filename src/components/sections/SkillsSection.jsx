@@ -200,14 +200,10 @@ export function SkillsSection() {
 
         {/* ── Constellation stage ───────────────────────────────────────── */}
         <div ref={gridRef} className="relative">
-          {isMobile ? (
-            <MobileSkillGrid skills={displayedSkills} />
-          ) : (
-            <ProximitySkillGrid
-              key={activeCategory}
-              skills={displayedSkills}
-            />
-          )}
+          <ProximitySkillGrid
+            key={activeCategory}
+            skills={displayedSkills}
+          />
         </div>
 
       </div>
