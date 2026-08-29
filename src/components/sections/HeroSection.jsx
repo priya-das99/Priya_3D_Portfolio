@@ -540,7 +540,7 @@ export function HeroSection() {
 
                 {/* Smooth reveal container for the Canvas/HeroScene */}
                 <div
-                  className="w-full h-full transition-opacity duration-700 ease-in-out"
+                  className={`w-full h-full transition-opacity duration-700 ease-in-out lg:pointer-events-auto ${canvasInteractive ? 'pointer-events-auto' : 'pointer-events-none'}`}
                   style={{ opacity: modelState === 'loaded' ? 1 : 0 }}
                 >
                   {loadScene && (
