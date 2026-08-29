@@ -72,48 +72,49 @@ function ScrollHelper() {
       }
 
       if (gestureType === 'scroll') {
-        // Stop the touch/pointer event from reaching OrbitControls
+        // Stop the touch/pointer event from propagating to OrbitControls or R3F listeners
         event.stopPropagation();
+        event.stopImmediatePropagation();
       }
     };
 
-    // 1. TOUCH EVENTS (For mobile browsers native scrolling pipeline)
+    // 1. TOUCH EVENTS
     const onTouchStart = (e) => {
-      if (e.touches.length === 1) {
+      if (e.touches.length === 1 && canvas.contains(e.target)) {
         handleStart(e.touches[0].clientX, e.touches[0].clientY);
       }
     };
 
     const onTouchMove = (e) => {
-      if (e.touches.length === 1) {
+      if (e.touches.length === 1 && canvas.contains(e.target)) {
         handleMove(e.touches[0].clientX, e.touches[0].clientY, e);
       }
     };
 
-    // 2. POINTER EVENTS (For three.js modern input pipelines)
+    // 2. POINTER EVENTS
     const onPointerDown = (e) => {
-      if (e.pointerType === 'touch') {
+      if (e.pointerType === 'touch' && canvas.contains(e.target)) {
         handleStart(e.clientX, e.clientY);
       }
     };
 
     const onPointerMove = (e) => {
-      if (e.pointerType === 'touch') {
+      if (e.pointerType === 'touch' && canvas.contains(e.target)) {
         handleMove(e.clientX, e.clientY, e);
       }
     };
 
-    // Add listeners in the capturing phase (capture: true) so they fire BEFORE OrbitControls
-    canvas.addEventListener('touchstart', onTouchStart, { capture: true, passive: true });
-    canvas.addEventListener('touchmove', onTouchMove, { capture: true, passive: true });
-    canvas.addEventListener('pointerdown', onPointerDown, { capture: true, passive: true });
-    canvas.addEventListener('pointermove', onPointerMove, { capture: true, passive: true });
+    // Register capture-phase listeners on window to intercept gestures at the absolute root of the DOM tree
+    window.addEventListener('touchstart', onTouchStart, { capture: true, passive: true });
+    window.addEventListener('touchmove', onTouchMove, { capture: true, passive: true });
+    window.addEventListener('pointerdown', onPointerDown, { capture: true, passive: true });
+    window.addEventListener('pointermove', onPointerMove, { capture: true, passive: true });
 
     return () => {
-      canvas.removeEventListener('touchstart', onTouchStart, { capture: true });
-      canvas.removeEventListener('touchmove', onTouchMove, { capture: true });
-      canvas.removeEventListener('pointerdown', onPointerDown, { capture: true });
-      canvas.removeEventListener('pointermove', onPointerMove, { capture: true });
+      window.removeEventListener('touchstart', onTouchStart, { capture: true });
+      window.removeEventListener('touchmove', onTouchMove, { capture: true });
+      window.removeEventListener('pointerdown', onPointerDown, { capture: true });
+      window.removeEventListener('pointermove', onPointerMove, { capture: true });
     };
   }, [gl]);
 
