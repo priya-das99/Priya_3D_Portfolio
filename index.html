@@ -14,7 +14,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   </head>
   <body class="bg-obsidian-950 text-slate-100 antialiased selection:bg-cyber-cyan selection:text-obsidian-950 overflow-x-hidden">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Instant HTML/CSS Loading Screen (Replaced once React mounts) -->
+      <div id="global-preloader" style="position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #0b0c10; z-index: 9999;">
+        <div style="width: 32px; height: 32px; border: 2.5px solid rgba(6, 182, 212, 0.08); border-top: 2.5px solid #06b6d4; border-radius: 50%; animation: spin 0.85s linear infinite;"></div>
+        <div style="margin-top: 14px; font-family: monospace; font-size: 10px; color: #06b6d4; letter-spacing: 0.22em; text-transform: uppercase; animation: pulse 1.6s infinite ease-in-out;">
+          Initializing Systems
+        </div>
+      </div>
+      <style>
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+      </style>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

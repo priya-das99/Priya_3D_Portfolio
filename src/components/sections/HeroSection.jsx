@@ -271,9 +271,9 @@ export function HeroSection() {
   const [loadScene, setLoadScene] = useState(false);
   const [modelState, setModelState] = useState('loading'); // 'loading' | 'loaded' | 'error'
 
-  // Mount 3D Scene quickly without blocking initial text render
+  // Mount 3D Scene after initial text entrance animations have finished playing
   useEffect(() => {
-    const timer = setTimeout(() => setLoadScene(true), 80);
+    const timer = setTimeout(() => setLoadScene(true), 1200);
     return () => clearTimeout(timer);
   }, []);
 
