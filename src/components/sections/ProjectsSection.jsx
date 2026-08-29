@@ -79,7 +79,7 @@ const PROJECTS_DATA = [
     category: 'Android Application Development',
     description:
       'An Android application designed for conducting online examinations, providing a digital platform for managing and participating in examination workflows.',
-    tech: ['Android', 'Java'],
+    tech: ['Android', 'React Native', 'Appwrite'],
     metrics: { label: 'Platform', value: 'Android' },
     links: { github: 'https://github.com/priya-das99/NeilitExamApp', demo: 'YOUR_DEMO_LINK' },
     gradient: 'from-primary-pink via-primary-purple to-cyan',
