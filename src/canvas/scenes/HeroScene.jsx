@@ -35,15 +35,88 @@ function LoadingReporter({ onLoad, onError }) {
   return null;
 }
 
-// Helper component to override Canvas touchAction settings
+// Helper component to override Canvas touchAction settings and differentiate gestures
 function ScrollHelper() {
   const { gl } = useThree();
+
   useEffect(() => {
-    if (gl && gl.domElement) {
-      // Force touch-action to pan-y to allow native vertical scrolling
-      gl.domElement.style.touchAction = 'pan-y';
-    }
+    const canvas = gl?.domElement;
+    if (!canvas) return;
+
+    // Force touch-action to pan-y to suggest native vertical scrolling to the browser
+    canvas.style.touchAction = 'pan-y';
+
+    let startX = 0;
+    let startY = 0;
+    let gestureType = null; // 'scroll' | 'rotate' | null
+
+    const handleStart = (clientX, clientY) => {
+      startX = clientX;
+      startY = clientY;
+      gestureType = null;
+    };
+
+    const handleMove = (clientX, clientY, event) => {
+      if (!gestureType) {
+        const dx = clientX - startX;
+        const dy = clientY - startY;
+
+        // Threshold of 6px to decide direction
+        if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+          if (Math.abs(dy) > Math.abs(dx)) {
+            gestureType = 'scroll';
+          } else {
+            gestureType = 'rotate';
+          }
+        }
+      }
+
+      if (gestureType === 'scroll') {
+        // Stop the touch/pointer event from reaching OrbitControls
+        event.stopPropagation();
+      }
+    };
+
+    // 1. TOUCH EVENTS (For mobile browsers native scrolling pipeline)
+    const onTouchStart = (e) => {
+      if (e.touches.length === 1) {
+        handleStart(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+
+    const onTouchMove = (e) => {
+      if (e.touches.length === 1) {
+        handleMove(e.touches[0].clientX, e.touches[0].clientY, e);
+      }
+    };
+
+    // 2. POINTER EVENTS (For three.js modern input pipelines)
+    const onPointerDown = (e) => {
+      if (e.pointerType === 'touch') {
+        handleStart(e.clientX, e.clientY);
+      }
+    };
+
+    const onPointerMove = (e) => {
+      if (e.pointerType === 'touch') {
+        handleMove(e.clientX, e.clientY, e);
+      }
+    };
+
+    // Add listeners in the capturing phase (capture: true) so they fire BEFORE OrbitControls
+    canvas.addEventListener('touchstart', onTouchStart, { capture: true, passive: true });
+    canvas.addEventListener('touchmove', onTouchMove, { capture: true, passive: true });
+    canvas.addEventListener('pointerdown', onPointerDown, { capture: true, passive: true });
+    canvas.addEventListener('pointermove', onPointerMove, { capture: true, passive: true });
+
+    return () => {
+      canvas.removeEventListener('touchstart', onTouchStart, { capture: true });
+      canvas.removeEventListener('touchmove', onTouchMove, { capture: true });
+      canvas.removeEventListener('pointerdown', onPointerDown, { capture: true });
+      canvas.removeEventListener('pointermove', onPointerMove, { capture: true });
+    };
   }, [gl]);
+
   return null;
 }
 
