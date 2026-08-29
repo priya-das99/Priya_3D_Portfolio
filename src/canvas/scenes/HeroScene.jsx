@@ -35,7 +35,26 @@ function LoadingReporter({ onLoad, onError }) {
   return null;
 }
 
-// Helper component to override Canvas touchAction settings and differentiate gestures
+// =============================================================================
+// ScrollHelper — fixes mobile scroll vs 3D interaction conflict
+//
+// ROOT CAUSES FOUND IN OrbitControls source (three.js v0.168):
+//  1. connect() line 204: domElement.style.touchAction = 'none'
+//     → OrbitControls hardcodes touch-action:none, overriding our pan-y.
+//  2. onPointerDown line 1122: domElement.setPointerCapture(event.pointerId)
+//     → Pointer capture routes ALL subsequent pointermove events directly
+//       to the canvas, completely bypassing window-level listeners.
+//
+// FIX:
+//  A. MutationObserver watches the canvas style attribute and immediately
+//     re-sets touchAction back to 'pan-y' whenever OrbitControls overwrites it.
+//  B. On pointerdown, store the pointerId.
+//  C. On pointermove (received directly on canvas due to pointer capture),
+//     detect vertical vs horizontal gesture direction.
+//  D. If vertical scroll: call canvas.releasePointerCapture(pointerId) so the
+//     browser's native scroll system takes over. OrbitControls will then receive
+//     a pointercancel event and stop its state machine.
+// =============================================================================
 function ScrollHelper() {
   const { gl } = useThree();
 
@@ -43,78 +62,71 @@ function ScrollHelper() {
     const canvas = gl?.domElement;
     if (!canvas) return;
 
-    // Force touch-action to pan-y to suggest native vertical scrolling to the browser
+    // ── A. Keep touch-action: pan-y despite OrbitControls resetting it ─────────
     canvas.style.touchAction = 'pan-y';
 
+    const observer = new MutationObserver(() => {
+      if (canvas.style.touchAction !== 'pan-y') {
+        canvas.style.touchAction = 'pan-y';
+      }
+    });
+    observer.observe(canvas, { attributes: true, attributeFilter: ['style'] });
+
+    // ── B/C/D. Gesture interceptor using pointer capture release ──────────────
     let startX = 0;
     let startY = 0;
-    let gestureType = null; // 'scroll' | 'rotate' | null
+    let activePointerId = null;
+    let gestureDecided = false;
 
-    const handleStart = (clientX, clientY) => {
-      startX = clientX;
-      startY = clientY;
-      gestureType = null;
-    };
-
-    const handleMove = (clientX, clientY, event) => {
-      if (!gestureType) {
-        const dx = clientX - startX;
-        const dy = clientY - startY;
-
-        // Threshold of 6px to decide direction
-        if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
-          if (Math.abs(dy) > Math.abs(dx)) {
-            gestureType = 'scroll';
-          } else {
-            gestureType = 'rotate';
-          }
-        }
-      }
-
-      if (gestureType === 'scroll') {
-        // Stop the touch/pointer event from propagating to OrbitControls or R3F listeners
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-      }
-    };
-
-    // 1. TOUCH EVENTS
-    const onTouchStart = (e) => {
-      if (e.touches.length === 1 && canvas.contains(e.target)) {
-        handleStart(e.touches[0].clientX, e.touches[0].clientY);
-      }
-    };
-
-    const onTouchMove = (e) => {
-      if (e.touches.length === 1 && canvas.contains(e.target)) {
-        handleMove(e.touches[0].clientX, e.touches[0].clientY, e);
-      }
-    };
-
-    // 2. POINTER EVENTS
     const onPointerDown = (e) => {
-      if (e.pointerType === 'touch' && canvas.contains(e.target)) {
-        handleStart(e.clientX, e.clientY);
-      }
+      if (e.pointerType !== 'touch') return;
+      // Track the touch pointer that OrbitControls just captured
+      activePointerId = e.pointerId;
+      startX = e.clientX;
+      startY = e.clientY;
+      gestureDecided = false;
     };
 
     const onPointerMove = (e) => {
-      if (e.pointerType === 'touch' && canvas.contains(e.target)) {
-        handleMove(e.clientX, e.clientY, e);
+      if (e.pointerType !== 'touch') return;
+      if (gestureDecided || activePointerId === null) return;
+
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return; // not enough movement yet
+
+      gestureDecided = true;
+
+      if (Math.abs(dy) > Math.abs(dx)) {
+        // VERTICAL SCROLL: release pointer capture so the browser scrolls the page
+        // OrbitControls will receive a synthetic pointercancel and reset its state
+        try {
+          canvas.releasePointerCapture(activePointerId);
+        } catch (_) {
+          // pointerId may already be released — ignore
+        }
       }
+      // HORIZONTAL ROTATE: do nothing — let OrbitControls handle it normally
     };
 
-    // Register capture-phase listeners on window to intercept gestures at the absolute root of the DOM tree
-    window.addEventListener('touchstart', onTouchStart, { capture: true, passive: true });
-    window.addEventListener('touchmove', onTouchMove, { capture: true, passive: true });
-    window.addEventListener('pointerdown', onPointerDown, { capture: true, passive: true });
-    window.addEventListener('pointermove', onPointerMove, { capture: true, passive: true });
+    const onPointerUp = () => {
+      activePointerId = null;
+      gestureDecided = false;
+    };
+
+    // These listeners are on the canvas itself (where pointer-captured events land)
+    canvas.addEventListener('pointerdown', onPointerDown, { passive: true });
+    canvas.addEventListener('pointermove', onPointerMove, { passive: true });
+    canvas.addEventListener('pointerup', onPointerUp, { passive: true });
+    canvas.addEventListener('pointercancel', onPointerUp, { passive: true });
 
     return () => {
-      window.removeEventListener('touchstart', onTouchStart, { capture: true });
-      window.removeEventListener('touchmove', onTouchMove, { capture: true });
-      window.removeEventListener('pointerdown', onPointerDown, { capture: true });
-      window.removeEventListener('pointermove', onPointerMove, { capture: true });
+      observer.disconnect();
+      canvas.removeEventListener('pointerdown', onPointerDown);
+      canvas.removeEventListener('pointermove', onPointerMove);
+      canvas.removeEventListener('pointerup', onPointerUp);
+      canvas.removeEventListener('pointercancel', onPointerUp);
     };
   }, [gl]);
 
