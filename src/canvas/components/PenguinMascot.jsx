@@ -267,19 +267,33 @@ export function PenguinMascot() {
   }, [scene]);
 
   // ==========================================================
-  // AUDIO SETUP
+  // AUDIO SETUP & ENDED EVENT LISTENER
   // ==========================================================
+
+  const handleStopRef = useRef();
+  handleStopRef.current = handleStop;
 
   useEffect(() => {
     const audio = new Audio(AUDIO_PATH);
 
-    audio.loop = true;
+    // Disable loop so the song plays through to the end
+    audio.loop = false;
 
     audio.volume = 0.6;
 
+    // Automatically trigger exit flow when music finishes
+    const onEnded = () => {
+      console.log("[PenguinMascot] Music ended — penguin walking out");
+      if (handleStopRef.current) {
+        handleStopRef.current();
+      }
+    };
+
+    audio.addEventListener("ended", onEnded);
     audioRef.current = audio;
 
     return () => {
+      audio.removeEventListener("ended", onEnded);
       audio.pause();
       audio.src = "";
     };
