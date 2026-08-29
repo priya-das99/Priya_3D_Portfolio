@@ -705,7 +705,8 @@ export function HeroScene({ onLoad, onError }) {
             ------------------------------------------------------------------ */}
         <OrbitControls
           enablePan={false}
-          enableZoom={true}
+          enableZoom={!isTablet}
+          enableRotate={!isTablet}
           enableDamping={true}
           dampingFactor={0.05}
           zoomSpeed={0.8}
