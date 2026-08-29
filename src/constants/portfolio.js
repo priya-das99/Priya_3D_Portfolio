@@ -6,8 +6,8 @@ export const PERSONAL_INFO = {
   location: "San Francisco, CA / Remote",
   availability: "Available for Lead AI & 3D Advisory Roles",
   socials: {
-    github: "https://github.com",
-    linkedin: "https://linkedin.com",
+    github: "https://github.com/priya-das99",
+    linkedin: "https://www.linkedin.com/in/priya-das99/",
     twitter: "https://twitter.com",
     huggingface: "https://huggingface.co",
     email: "priyadascareer@gmail.com"
