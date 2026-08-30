@@ -410,7 +410,7 @@ export function HeroSection() {
     <section
       ref={sectionRef}
       id="home"
-      className="relative min-h-screen flex items-center justify-center pt-28 sm:pt-32 lg:pt-36 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12 overflow-hidden bg-bg"
+      className="relative min-h-screen flex items-center justify-center pt-28 sm:pt-32 lg:pt-36 pb-16 px-4 sm:px-6 lg:px-8 xl:px-12 overflow-hidden bg-bg scroll-mt-20"
     >
       {/* ── Background Ambient Glow Blobs & Subtle Grid ─────────────────────── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">

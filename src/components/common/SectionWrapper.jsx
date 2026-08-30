@@ -23,7 +23,7 @@ export function SectionWrapper({ children, id, className = '', ...props }) {
   const scale = useTransform(springProgress, [0, 0.22, 0.78, 1], [0.96, 1, 1, 0.98]);
 
   return (
-    <section ref={sectionRef} id={id} className={`relative ${className}`} {...props}>
+    <section ref={sectionRef} id={id} className={`relative scroll-mt-20 ${className}`} {...props}>
       <motion.div
         style={{
           opacity,

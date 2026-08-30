@@ -31,6 +31,29 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Smooth scroll click handler for header links
+  const handleNavClick = (e, item) => {
+    if (e) e.preventDefault();
+    setActiveItem(item.label);
+    setMobileMenuOpen(false);
+
+    const targetId = item.href.replace('#', '');
+    const targetElement = document.getElementById(targetId);
+
+    if (targetElement) {
+      setTimeout(() => {
+        const navOffset = 80;
+        const elementPosition = targetElement.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - navOffset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth',
+        });
+      }, 20);
+    }
+  };
+
   // Automatic Section Scroll Spy via IntersectionObserver
   useEffect(() => {
     const sections = NAV_ITEMS.map((item) => document.querySelector(item.href)).filter(Boolean);
@@ -78,7 +101,7 @@ export function Navbar() {
           <a
             href="#home"
             className="group flex items-center space-x-2.5 text-decoration-none"
-            onClick={() => setActiveItem('Home')}
+            onClick={(e) => handleNavClick(e, { label: 'Home', href: '#home' })}
           >
             <div className="relative flex items-center justify-center w-9 h-9 rounded-10 bg-surface-2 border border-white/10 group-hover:border-primary-blue/50 transition-colors duration-300">
               <Sparkles className="w-4 h-4 text-primary-blue group-hover:text-primary-pink transition-colors duration-500" />
@@ -98,7 +121,7 @@ export function Navbar() {
                 <a
                   key={item.label}
                   href={item.href}
-                  onClick={() => setActiveItem(item.label)}
+                  onClick={(e) => handleNavClick(e, item)}
                   onMouseEnter={() => setHoveredItem(item.label)}
                   onMouseLeave={() => setHoveredItem(null)}
                   className={`relative px-4 py-2 text-sm font-medium transition-colors duration-300 ${
@@ -178,10 +201,7 @@ export function Navbar() {
                   <a
                     key={item.label}
                     href={item.href}
-                    onClick={() => {
-                      setActiveItem(item.label);
-                      setMobileMenuOpen(false);
-                    }}
+                    onClick={(e) => handleNavClick(e, item)}
                     className={`px-4 py-3 rounded-12 text-base font-medium transition-all duration-300 flex items-center justify-between ${
                       activeItem === item.label
                         ? 'bg-gradient-to-r from-primary-blue/20 to-primary-purple/20 text-content-primary border border-primary-blue/30'
