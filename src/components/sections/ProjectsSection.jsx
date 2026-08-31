@@ -84,6 +84,7 @@ const PROJECTS_DATA = [
     links: { github: 'https://github.com/priya-das99/NeilitExamApp', demo: 'YOUR_DEMO_LINK' },
     gradient: 'from-primary-pink via-primary-purple to-cyan',
     accentColor: '#D946EF',
+    image: '/assets/project images/exam.png',
   },
 ];
 
