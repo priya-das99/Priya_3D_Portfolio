@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { useLenis } from '@hooks/useLenis';
 import { CustomCursor } from '@components/common/CustomCursor';
 import { AnimatedBackground } from '@components/common/AnimatedBackground';
@@ -28,6 +29,9 @@ export function App() {
 
   return (
     <div className="relative min-h-screen bg-bg text-content-primary font-sans selection:bg-cyan selection:text-bg">
+      {/* Vercel Web Analytics */}
+      <Analytics />
+
       {/* Reusable Animated Background (Blobs + Noise + Cursor Glow) */}
       <AnimatedBackground />
 
