@@ -475,7 +475,7 @@ export function HeroSection() {
 
               {/* 4. First Paragraph */}
               <p className="hero-para text-gray-300 text-[15px] sm:text-[16.5px] font-sans font-normal leading-[1.65] max-w-[480px] mb-6">
-                I’m a software engineer who primarily works with <span className="text-cyan font-semibold">Python</span>, while also adapting to other technologies based on the needs of a project. I enjoy building things, exploring new tools, and solving problems along the way.
+                I'm a software engineer focused on backend development and AI/ML.  While <span className="text-cyan font-semibold">Python</span>  is my primary language, but I’m comfortable working across technologies and learning what a project needs.I see programming languages as tools—the important part is choosing the right ones to solve problems and build things that work
               </p>
 
               {/* 5. Personal Line (Two aligned natural lines with inline GSAP slider) */}
