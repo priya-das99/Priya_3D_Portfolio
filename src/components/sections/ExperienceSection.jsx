@@ -39,9 +39,10 @@ const EXPERIENCE_DATA = [
     duration: 'Feb 2022 — Jul 2023',
     location: '',
     achievements: [
-      'Designed and implemented Disaster Recovery strategies on Azure using Azure Backup policies to support data recovery and business continuity.',
-      'Configured, deployed, and troubleshot Azure Virtual Machines, Storage, Active Directory, and SQL Managed Instances, focusing on system performance and security compliance.',
-      'Managed and optimized AWS infrastructure including EC2 and S3 through provisioning, monitoring, and cost optimization to improve system reliability.',
+      'Designed and implemented Azure-based disaster recovery strategies with 7-day backup retention, helping protect client data against server failures, disk corruption, and other infrastructure incidents while supporting business continuity.',
+      'Managed and optimized 30+ Azure Virtual Machines across multiple clients, scaling VM capacity based on examination workloads to maintain system availability during peak demand and reduce unnecessary resource usage during low-demand periods.',
+      ' Resolved 15+ daily technical support tickets across multiple client environments, troubleshooting Azure and application-related issues to minimize disruptions and support seamless operations for 1000+ end users.',
+
     ],
     tech: ['Microsoft Azure', 'Azure Backup', 'Azure VMs', 'Azure Storage', 'Active Directory', 'SQL Managed Instances', 'AWS EC2', 'AWS S3'],
   },
