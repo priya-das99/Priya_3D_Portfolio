@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { useLenis } from '@hooks/useLenis';
 import { CustomCursor } from '@components/common/CustomCursor';
 import { AnimatedBackground } from '@components/common/AnimatedBackground';
@@ -55,6 +56,9 @@ export function App() {
 
       {/* Layout Footer */}
       <Footer />
+
+      {/* Vercel Web Analytics */}
+      <Analytics />
     </div>
   );
 }
